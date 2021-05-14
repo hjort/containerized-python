@@ -8,7 +8,9 @@ WORKDIR /code
 COPY requirements.txt .
 
 # install dependencies
-RUN pip install -r requirements.txt
+#RUN pip install Flask==1.1.1 config --global http.sslVerify false
+RUN pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
+#RUN pip install -r requirements.txt
 
 # copy the content of the local src directory to the working directory
 COPY src/ .
