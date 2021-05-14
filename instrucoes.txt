@@ -1,0 +1,65 @@
+# iniciar e parar o serviço
+sudo systemctl status docker
+sudo systemctl stop docker
+sudo systemctl start docker
+
+# baixar e rodar imagem de teste
+sudo docker pull hello-world
+sudo docker run hello-world
+
+# listar imagens e conteineres
+sudo docker image ls
+sudo docker container ls
+sudo docker container ls -a
+
+# baixar e rodar conteiner com imagem
+sudo docker container run -it centos
+cat /etc/redhat-release
+ls ~
+touch ~/teste.txt
+exit
+
+# verificar se conteiner parou
+sudo docker container ls
+
+# rodar novamente o conteiner e verificar arquivo criado
+sudo docker run -it centos
+ls ~ # não está mais lá...
+
+# sair do terminal docker
+# Ctrl+P, Ctrl+Q (para sair do terminal sem parar o conteiner)
+
+# verificar se conteiner continua rodando
+sudo docker ps
+
+# voltar para o terminal do conteiner
+sudo docker container attach 98c06e41a1a2
+
+# verificar estatísticas dos conteineres
+sudo docker container stats
+
+# listar conteineres em execução
+sudo docker ps
+
+# parar conteiner e verificar
+sudo docker container stop 98c06e41a1a2
+sudo docker ps
+sudo docker ps -a
+
+# reiniciar conteiner previamente parado
+sudo docker container start 98c06e41a1a2
+sudo docker ps
+
+# remover conteineres não usados
+sudo docker ps -a
+sudo docker container rm 2ecd5c114b55
+
+# imagens continuam instaladas
+sudo docker images
+
+# instalar e rodar conteiner debian
+sudo docker run -it debian
+# Ctrl+P, Ctrl+Q
+sudo docker images
+sudo docker ps
+
