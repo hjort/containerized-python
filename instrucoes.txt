@@ -63,3 +63,109 @@ sudo docker run -it debian
 sudo docker images
 sudo docker ps
 
+# verificar os limites do conteiner
+sudo docker inspect b0a03f24868b
+sudo docker inspect b0a03f24868b | grep -i mem
+
+# iniciar conteiner limitando a memória
+sudo docker run -it -m 512M debian
+# Ctrl+P, Ctrl+Q
+sudo docker ps
+sudo docker inspect ff1014860692 | grep -i mem
+sudo docker stats
+
+# iniciar conteiner limitando a cpu
+sudo docker run -it --cpus=0.5 debian
+# Ctrl+P, Ctrl+Q
+sudo docker ps
+sudo docker inspect 500e6e51b913 | grep -i cpu
+sudo docker stats
+
+# criar imagem customizada em docker
+cat > Dockerfile << EOF
+FROM ubuntu
+RUN apt-get update
+RUN apt-get install -y nginx
+EOF
+sudo docker build -t webserver .
+sudo docker images
+
+# executar o conteiner e subir o servidor web mapeando a portas 80
+sudo docker run -d -p 8080:80 webserver /usr/sbin/nginx -g "daemon off;"
+sudo docker ps
+netstat -ante
+curl -IL http://localhost:8080
+curl -v http://localhost:8080
+
+# parar conteiner com o webserver
+sudo docker ps
+sudo docker container stop ff8ef5583aa0
+
+# modificar e reconstruir a imagem, expondo a porta 80
+echo "EXPOSE 80" >> Dockerfile
+sudo docker build -t webserver .
+sudo docker images
+
+# rodar novamente o conteiner webserver
+sudo docker run -d -P webserver /usr/sbin/nginx -g "daemon off;"
+sudo docker ps
+netstat -ante
+curl -IL http://localhost:32768
+ifconfig | grep "inet " -B1
+
+# acessar o serviço web de outro local
+# http://10.34.5.171:32768/
+
+# configurar acesso direto ao conteiner
+echo "ADD servidor /etc/nginx/sites-enabled/default" >> Dockerfile
+cat > servidor << EOF
+server {
+	listen 80 default_server;
+	server_name localhost;
+	root /usr/share/nginx/html;
+	index index.html index.htm;
+}
+EOF
+sudo docker build -t webserver .
+sudo docker images
+
+# rodar novamente o conteiner webserver, mas sem o mapeamento
+sudo docker run -d webserver /usr/sbin/nginx -g "daemon off;"
+sudo docker ps
+netstat -ante
+curl -IL http://localhost # erro
+
+# testar acesso diretamento no conteiner
+sudo docker ps
+sudo docker inspect 63ec00283d7b | grep IPAddress
+curl -IL http://172.17.0.8
+
+# verificar redes no docker
+# https://docs.docker.com/network/
+sudo docker network ls
+
+# reiniciar o conteiner com um modo de rede diferente (host)
+sudo docker ps
+sudo docker container stop 63ec00283d7b
+sudo docker run --network host \
+  -d webserver /usr/sbin/nginx -g "daemon off;"
+
+# verificar rede do conteiner
+sudo docker ps
+sudo docker inspect 4777be1aef3e | grep IPAddress
+netstat -ante
+ifconfig | grep "inet " -B1
+
+# acessar o serviço web de outro local
+# http://10.34.5.171/
+
+# criar página HTML para o servidor web mapeando volume
+mkdir appweb
+echo "Bem-vindo ao nosso servidor web" > appweb/index.html
+sudo docker ps
+sudo docker container stop d0639dcf34ea
+sudo docker run --network host -d \
+  -v $PWD/appweb:/usr/share/nginx/html:ro \
+  webserver /usr/sbin/nginx -g "daemon off;"
+sudo docker inspect d562ffba81c4 | grep Binds -A 2
+curl -v http://10.34.5.171
